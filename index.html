@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D立体相册</title>
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            height: 100vh;
+            perspective: 1200px;
+        }
+        
+        /* 背景效果 */
+        .bg-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(125deg, #2c3e50, #000428);
+            z-index: -2;
+            overflow: hidden;
+        }
+        
+        .bg-effect::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(15, 35, 65, 0) 0%, rgba(15, 35, 65, 0.5) 70%, rgba(15, 35, 65, 0.8) 100%);
+        }
+        
+        .aurora {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: 
+                linear-gradient(90deg, rgba(0,210,255,0.1) 0%, rgba(0,210,255,0) 100%),
+                linear-gradient(210deg, rgba(132,0,255,0.1) 0%, rgba(132,0,255,0) 100%),
+                linear-gradient(45deg, rgba(0,255,170,0.1) 0%, rgba(0,255,170,0) 100%);
+            filter: blur(60px);
+            animation: aurora-movement 30s infinite alternate;
+            opacity: 0.5;
+            z-index: -1;
+        }
+        
+        @keyframes aurora-movement {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(180deg) scale(1.2);
+            }
+            100% {
+                transform: rotate(360deg) scale(1);
+            }
+        }
+        
+        /* 星星样式改进 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.7;
+        }
+        
+        /* 容器 */
+        .container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            position: absolute;
+            top: 30px;
+            z-index: 2;
+        }
+        
+        /* 立方体舞台 */
+        .stage {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            perspective: 1200px;
+            transform-style: preserve-3d;
+        }
+        
+        .cube-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-10deg) rotateY(20deg);
+            transition: transform 0.5s;
+        }
+        
+        .auto-rotate {
+            animation: rotateCube 30s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* 立方体基本样式改进 */
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: all 2.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        
+        .cube-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 20, 30, 0.6);
+            border: 1px solid rgba(100, 200, 255, 0.4);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 
+                0 0 15px rgba(0, 200, 255, 0.3),
+                inset 0 0 20px rgba(0, 150, 255, 0.1);
+            backface-visibility: visible;
+            transition: all 2.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            transform-origin: center center;
+            cursor: pointer;
+        }
+        
+        .cube-face::before {
+            content: "双击添加视频";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* 仅显示没有视频的面的提示 */
+        .cube-face:not(:has(video)):hover::before {
+            opacity: 1;
+        }
+        
+        /* 立方体位置 */
+        .cube-face.front {
+            transform: translateZ(150px);
+        }
+        
+        .cube-face.back {
+            transform: rotateY(180deg) translateZ(150px);
+        }
+        
+        .cube-face.right {
+            transform: rotateY(90deg) translateZ(150px);
+        }
+        
+        .cube-face.left {
+            transform: rotateY(-90deg) translateZ(150px);
+        }
+        
+        .cube-face.top {
+            transform: rotateX(90deg) translateZ(150px);
+        }
+        
+        .cube-face.bottom {
+            transform: rotateX(-90deg) translateZ(150px);
+        }
+        
+        /* 新效果 - 钻石展开 */
+        .cube.diamond .cube-face.front {
+            transform: translateZ(170px) rotateZ(45deg) scale(0.85);
+        }
+        
+        .cube.diamond .cube-face.back {
+            transform: rotateY(180deg) translateZ(170px) rotateZ(-45deg) scale(0.85);
+        }
+        
+        .cube.diamond .cube-face.right {
+            transform: rotateY(90deg) translateZ(170px) rotateZ(45deg) scale(0.85);
+        }
+        
+        .cube.diamond .cube-face.left {
+            transform: rotateY(-90deg) translateZ(170px) rotateZ(-45deg) scale(0.85);
+        }
+        
+        .cube.diamond .cube-face.top {
+            transform: rotateX(90deg) translateZ(170px) rotateZ(45deg) scale(0.85);
+        }
+        
+        .cube.diamond .cube-face.bottom {
+            transform: rotateX(-90deg) translateZ(170px) rotateZ(-45deg) scale(0.85);
+        }
+        
+        /* 新效果 - 星系旋转 */
+        .cube.galaxy .cube-face {
+            transform-origin: 50% 100px;
+        }
+        
+        .cube.galaxy .cube-face.front {
+            transform: translateZ(100px) translateY(-70px) rotateX(20deg);
+        }
+        
+        .cube.galaxy .cube-face.back {
+            transform: rotateY(180deg) translateZ(100px) translateY(-40px) rotateX(-20deg);
+        }
+        
+        .cube.galaxy .cube-face.right {
+            transform: rotateY(90deg) translateZ(100px) translateY(-20px) rotateX(10deg);
+        }
+        
+        .cube.galaxy .cube-face.left {
+            transform: rotateY(-90deg) translateZ(100px) translateY(-30px) rotateX(-15deg);
+        }
+        
+        .cube.galaxy .cube-face.top {
+            transform: rotateX(90deg) translateZ(100px) translateY(-60px) rotateX(25deg);
+        }
+        
+        .cube.galaxy .cube-face.bottom {
+            transform: rotateX(-90deg) translateZ(100px) translateY(-50px) rotateX(-10deg);
+        }
+        
+        /* 新效果 - 炫彩发散 */
+        .cube.prism .cube-face {
+            border-width: 2px;
+        }
+        
+        .cube.prism .cube-face.front {
+            transform: translateZ(200px);
+            border-color: rgba(0, 255, 255, 0.7);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
+        }
+        
+        .cube.prism .cube-face.back {
+            transform: rotateY(180deg) translateZ(200px);
+            border-color: rgba(255, 0, 255, 0.7);
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.5);
+        }
+        
+        .cube.prism .cube-face.right {
+            transform: rotateY(90deg) translateZ(200px);
+            border-color: rgba(255, 255, 0, 0.7);
+            box-shadow: 0 0 25px rgba(255, 255, 0, 0.5);
+        }
+        
+        .cube.prism .cube-face.left {
+            transform: rotateY(-90deg) translateZ(200px);
+            border-color: rgba(0, 255, 0, 0.7);
+            box-shadow: 0 0 25px rgba(0, 255, 0, 0.5);
+        }
+        
+        .cube.prism .cube-face.top {
+            transform: rotateX(90deg) translateZ(200px);
+            border-color: rgba(0, 0, 255, 0.7);
+            box-shadow: 0 0 25px rgba(0, 0, 255, 0.5);
+        }
+        
+        .cube.prism .cube-face.bottom {
+            transform: rotateX(-90deg) translateZ(200px);
+            border-color: rgba(255, 0, 0, 0.7);
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.5);
+        }
+        
+        /* 动画和过渡优化 */
+        @keyframes rotateCube {
+            0% {
+                transform: rotateX(-15deg) rotateY(0deg);
+            }
+            25% {
+                transform: rotateX(0deg) rotateY(90deg);
+            }
+            50% {
+                transform: rotateX(15deg) rotateY(180deg);
+            }
+            75% {
+                transform: rotateX(0deg) rotateY(270deg);
+            }
+            100% {
+                transform: rotateX(-15deg) rotateY(360deg);
+            }
+        }
+        
+        /* 视频样式 */
+        .cube-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        /* 控制按钮 - 移除按钮显示 */
+        .transform-controls {
+            display: none;
+        }
+        
+        /* 静音指示器 - 隐藏 */
+        .mute-indicator {
+            display: none !important;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .stage {
+                width: 250px;
+                height: 250px;
+            }
+        }
+        
+        /* 隐藏消息 */
+        .message {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-effect"></div>
+    <div class="aurora"></div>
+    <canvas class="stars" id="stars"></canvas>
+    
+    <div class="container">
+        <h1 class="title">3D立体相册</h1>
+        
+        <div class="stage" id="stage">
+            <div class="cube-wrapper" id="cube-wrapper">
+                <div class="cube" id="cube">
+                    <div class="cube-face front" id="face-front" data-face="front"></div>
+                    <div class="cube-face back" id="face-back" data-face="back"></div>
+                    <div class="cube-face right" id="face-right" data-face="right"></div>
+                    <div class="cube-face left" id="face-left" data-face="left"></div>
+                    <div class="cube-face top" id="face-top" data-face="top"></div>
+                    <div class="cube-face bottom" id="face-bottom" data-face="bottom"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 隐藏控制按钮 -->
+        <div class="transform-controls">
+            <div class="transform-btn" id="normal-btn">正常</div>
+            <div class="transform-btn" id="explode-btn">发散</div>
+            <div class="transform-btn" id="spiral-btn">螺旋</div>
+            <div class="transform-btn" id="stack-btn">层叠</div>
+        </div>
+    </div>
+    
+    <!-- 隐藏的视频输入 -->
+    <input type="file" id="video-input" accept="video/*" style="display:none;">
+    
+    <!-- 隐藏消息容器 -->
+    <div class="message" id="success-message"></div>
+    <div class="message" id="error-message"></div>
+    <div class="message" id="loading-message"></div>
+
+    <script>
+        // 初始化星空背景
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('stars');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            
+            // 调整大小
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+            }
+            
+            // 创建星星
+            function createStars(count) {
+                const stars = [];
+                for (let i = 0; i < count; i++) {
+                    stars.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        radius: Math.random() * 2, // 增加一些星星的大小
+                        opacity: Math.random() * 0.8 + 0.2, // 随机不透明度
+                        vx: Math.random() * 0.5 - 0.25,
+                        vy: Math.random() * 0.5 - 0.25
+                    });
+                }
+                return stars;
+            }
+            
+            // 绘制星星
+            function drawStars(stars) {
+                ctx.clearRect(0, 0, width, height);
+                
+                stars.forEach(star => {
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                    ctx.fill();
+                    
+                    // 偶尔添加星星闪烁效果
+                    if (Math.random() > 0.99) {
+                        star.opacity = Math.random() * 0.8 + 0.2;
+                    }
+                    
+                    // 移动星星
+                    star.x += star.vx;
+                    star.y += star.vy;
+                    
+                    // 如果星星移出边界，重新放置
+                    if (star.x < 0 || star.x > width) star.x = Math.random() * width;
+                    if (star.y < 0 || star.y > height) star.y = Math.random() * height;
+                });
+            }
+            
+            // 初始化
+            resize();
+            const stars = createStars(300); // 增加星星数量
+            
+            // 动画循环
+            function animate() {
+                drawStars(stars);
+                requestAnimationFrame(animate);
+            }
+            
+            window.addEventListener('resize', resize);
+            animate();
+            
+            // 立方体控制
+            const cube = document.getElementById('cube');
+            const cubeWrapper = document.getElementById('cube-wrapper');
+            const videoInput = document.getElementById('video-input');
+            const stage = document.getElementById('stage');
+            
+            // 自动旋转
+            cubeWrapper.classList.add('auto-rotate');
+            
+            // 鼠标控制旋转
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            let rotation = { x: -10, y: 20 };
+            let autoRotate = true;
+            
+            stage.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                previousMousePosition = {
+                    x: e.clientX,
+                    y: e.clientY
+                };
+                // 停止自动旋转
+                if (autoRotate) {
+                    cubeWrapper.classList.remove('auto-rotate');
+                    autoRotate = false;
+                }
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    const deltaMove = {
+                        x: e.clientX - previousMousePosition.x,
+                        y: e.clientY - previousMousePosition.y
+                    };
+                    
+                    rotation.y += deltaMove.x * 0.5;
+                    rotation.x -= deltaMove.y * 0.5;
+                    
+                    cubeWrapper.style.transform = `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`;
+                    
+                    previousMousePosition = {
+                        x: e.clientX,
+                        y: e.clientY
+                    };
+                }
+            });
+            
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+            
+            // 双击事件处理
+            const faces = cube.querySelectorAll('.cube-face');
+            faces.forEach(face => {
+                face.addEventListener('dblclick', function() {
+                    videoInput.setAttribute('data-target-face', this.id);
+                    videoInput.click();
+                });
+            });
+            
+            // 视频选择处理
+            videoInput.addEventListener('change', function() {
+                const targetFaceId = this.getAttribute('data-target-face');
+                const targetFace = document.getElementById(targetFaceId);
+                
+                if (!targetFace) return;
+                
+                const file = this.files[0];
+                if (!file || !file.type.startsWith('video/')) return;
+                
+                try {
+                    // 创建视频元素
+                    const video = document.createElement('video');
+                    video.className = 'cube-video';
+                    video.controls = true;
+                    video.playsInline = true;
+                    video.muted = false;
+                    video.autoplay = true;
+                    video.loop = true;
+                    video.preload = 'auto';
+                    video.setAttribute('autoplay', '');
+                    video.setAttribute('playsinline', '');
+                    
+                    // 设置视频源
+                    const videoSrc = URL.createObjectURL(file);
+                    video.src = videoSrc;
+                    
+                    // 强制播放函数
+                    const forcePlay = () => {
+                        const playPromise = video.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(() => {
+                                video.muted = true;
+                                video.play().catch(err => console.log('无法播放视频:', err));
+                            });
+                        }
+                    };
+                    
+                    // 视频加载处理
+                    video.onloadeddata = forcePlay;
+                    video.addEventListener('canplaythrough', forcePlay);
+                    
+                    // 清空当前面内容并添加视频
+                    targetFace.innerHTML = '';
+                    targetFace.appendChild(video);
+                    
+                    // 保存到localStorage
+                    const timestamp = Date.now();
+                    const videoData = {
+                        faceId: targetFaceId,
+                        fileName: `video_${timestamp}_${targetFaceId}.${file.name.split('.').pop()}`,
+                        originalName: file.name,
+                        timestamp: timestamp,
+                        blobUrl: videoSrc
+                    };
+                    
+                    try {
+                        const faceMap = JSON.parse(localStorage.getItem('faceVideoMap') || '{}');
+                        faceMap[targetFaceId] = videoData;
+                        localStorage.setItem('faceVideoMap', JSON.stringify(faceMap));
+                    } catch (error) {
+                        console.error('保存视频数据失败:', error);
+                    }
+                    
+                    // 清除文件输入
+                    this.value = '';
+                    
+                } catch (error) {
+                    console.error('处理视频时出错:', error);
+                    this.value = '';
+                }
+            });
+            
+            // 加载默认视频
+            function loadDefaultVideos() {
+                const faceVideoMap = {
+                    'face-front': '1.mp4',
+                    'face-back': '2.mp4',
+                    'face-right': '3.mp4',
+                    'face-left': '4.mp4',
+                    'face-top': '5.mp4',
+                    'face-bottom': '6.mp4'
+                };
+                
+                Object.entries(faceVideoMap).forEach(([faceId, videoFileName]) => {
+                    const face = document.getElementById(faceId);
+                    if (!face) return;
+                    
+                    try {
+                        const videoPath = `video/${videoFileName}`;
+                        const video = document.createElement('video');
+                        video.className = 'cube-video';
+                        video.controls = true;
+                        video.playsInline = true;
+                        video.muted = false;
+                        video.autoplay = true;
+                        video.loop = true;
+                        video.preload = 'auto';
+                        video.setAttribute('autoplay', '');
+                        video.setAttribute('playsinline', '');
+                        video.src = videoPath;
+                        
+                        // 强制播放函数
+                        const forcePlay = () => {
+                            const playPromise = video.play();
+                            if (playPromise !== undefined) {
+                                playPromise.catch(() => {
+                                    video.muted = true;
+                                    video.play().catch(err => console.log('无法播放视频:', err));
+                                });
+                            }
+                        };
+                        
+                        // 错误处理
+                        video.onerror = function() {
+                            console.error(`加载视频失败: ${videoPath}`);
+                        };
+                        
+                        // 成功处理
+                        video.onloadeddata = function() {
+                            forcePlay();
+                            
+                            // 保存视频信息
+                            const videoData = {
+                                faceId: faceId,
+                                fileName: videoFileName,
+                                originalName: videoFileName,
+                                timestamp: Date.now(),
+                                isDefault: true
+                            };
+                            
+                            try {
+                                const faceMap = JSON.parse(localStorage.getItem('faceVideoMap') || '{}');
+                                faceMap[faceId] = videoData;
+                                localStorage.setItem('faceVideoMap', JSON.stringify(faceMap));
+                            } catch (error) {
+                                console.error('保存视频数据失败:', error);
+                            }
+                        };
+                        
+                        video.addEventListener('canplaythrough', forcePlay);
+                        
+                        face.innerHTML = '';
+                        face.appendChild(video);
+                        
+                    } catch (e) {
+                        console.error(`处理视频时出错: ${e}`);
+                    }
+                });
+                
+                // 全局交互处理
+                document.addEventListener('click', function() {
+                    document.querySelectorAll('.cube-video').forEach(video => {
+                        if (video.paused) {
+                            video.play();
+                        }
+                    });
+                }, { once: true });
+            }
+            
+            // 加载视频
+            loadDefaultVideos();
+            
+            // 双击空白处恢复自动旋转
+            document.addEventListener('dblclick', function(e) {
+                // 检查点击事件是否在立方体外
+                const cubeRect = cube.getBoundingClientRect();
+                if (
+                    e.clientX < cubeRect.left || e.clientX > cubeRect.right ||
+                    e.clientY < cubeRect.top || e.clientY > cubeRect.bottom
+                ) {
+                    cubeWrapper.classList.add('auto-rotate');
+                    autoRotate = true;
+                }
+            });
+            
+            // 自动变形序列 - 更新为新的效果
+            const effects = ['normal', 'diamond', 'galaxy', 'prism'];
+            let currentEffectIndex = 0;
+            
+            function applyNextEffect() {
+                // 获取当前效果
+                const effect = effects[currentEffectIndex];
+                
+                // 应用效果 - 使用更丝滑的过渡
+                if (effect === 'normal') {
+                    cube.className = 'cube';
+                } else {
+                    cube.className = 'cube ' + effect;
+                }
+                
+                // 更新索引
+                currentEffectIndex = (currentEffectIndex + 1) % effects.length;
+                
+                // 每次变形后延迟一段时间再切换到下一个
+                setTimeout(applyNextEffect, 12000); // 每12秒切换一次效果
+            }
+            
+            // 开始自动变形序列，延迟执行以让视频先加载
+            setTimeout(applyNextEffect, 4000); // 延迟4秒后开始第一个变形
+        });
+    </script>
+</body>
+</html>

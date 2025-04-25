@@ -1,0 +1,423 @@
+/* 基础样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+}
+
+/* 背景效果 */
+.bg-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background: radial-gradient(circle at center, rgba(50, 0, 30, 0.9) 0%, rgba(0, 0, 0, 1) 70%);
+}
+
+.stars {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+/* 漂浮心形容器 */
+#hearts-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+    overflow: hidden;
+}
+
+/* 心形动画样式 */
+.heart {
+    position: absolute;
+    top: -50px;
+    animation-name: floatHeart;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+@keyframes floatHeart {
+    0% {
+        transform: translateY(0) rotate(0deg) scale(1);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg) scale(0.5);
+        opacity: 0;
+    }
+}
+
+/* 容器 */
+.container {
+    position: relative;
+    z-index: 5;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 标题 */
+.title {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    text-shadow: 0 0 10px rgba(255, 100, 255, 0.8);
+}
+
+/* 3D旋转舞台 */
+.stage {
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    perspective: 1500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 立方体容器 */
+#cube-wrapper {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    transform-style: preserve-3d;
+    transform: rotateX(10deg);
+    will-change: transform;
+}
+
+/* 自动旋转动画 */
+#cube-wrapper.auto-rotate {
+    animation: rotateCube 30s infinite linear;
+}
+
+@keyframes rotateCube {
+    0% { transform: rotateX(10deg) rotateY(0deg); }
+    100% { transform: rotateX(10deg) rotateY(360deg); }
+}
+
+/* 立方体 */
+.cube {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+}
+
+/* 立方体面 */
+.cube-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 30, 60, 0.8);
+    border: 2px solid rgba(100, 180, 255, 0.8);
+    overflow: hidden;
+    backface-visibility: visible;
+    transform-style: preserve-3d;
+    box-shadow: 0 0 20px rgba(100, 180, 255, 0.4);
+    transition: all 0.5s ease;
+    cursor: pointer;
+}
+
+.cube-face::before {
+    content: "双击添加视频";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.cube-face:hover::before {
+    opacity: 1;
+}
+
+/* 当面上已有视频时，隐藏提示 */
+.cube-face:has(video)::before {
+    display: none;
+}
+
+.cube-face.active {
+    border-color: rgba(255, 100, 255, 0.9);
+    box-shadow: 0 0 30px rgba(255, 100, 255, 0.8);
+}
+
+/* 立方体各面位置 */
+.front {
+    transform: translateZ(150px);
+}
+
+.back {
+    transform: rotateY(180deg) translateZ(150px);
+}
+
+.right {
+    transform: rotateY(90deg) translateZ(150px);
+}
+
+.left {
+    transform: rotateY(-90deg) translateZ(150px);
+}
+
+.top {
+    transform: rotateX(90deg) translateZ(150px);
+}
+
+.bottom {
+    transform: rotateX(-90deg) translateZ(150px);
+}
+
+/* 立方体展开效果 */
+.cube.explode .front {
+    transform: translateZ(300px);
+}
+
+.cube.explode .back {
+    transform: rotateY(180deg) translateZ(300px);
+}
+
+.cube.explode .right {
+    transform: rotateY(90deg) translateZ(300px);
+}
+
+.cube.explode .left {
+    transform: rotateY(-90deg) translateZ(300px);
+}
+
+.cube.explode .top {
+    transform: rotateX(90deg) translateZ(300px);
+}
+
+.cube.explode .bottom {
+    transform: rotateX(-90deg) translateZ(300px);
+}
+
+/* 控制按钮 */
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    background: rgba(100, 180, 255, 0.3);
+    border: 1px solid rgba(100, 180, 255, 0.6);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    background: rgba(100, 180, 255, 0.5);
+}
+
+/* 视频元素 */
+.cube-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 2;
+}
+
+/* 消息提示 */
+.message {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 5px;
+    color: white;
+    z-index: 100;
+    display: none;
+    min-width: 200px;
+    text-align: center;
+}
+
+.success-message {
+    background: rgba(0, 180, 0, 0.8);
+}
+
+.error-message {
+    background: rgba(180, 0, 0, 0.8);
+}
+
+.loading-message {
+    background: rgba(0, 0, 180, 0.8);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    #cube-wrapper {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .front { transform: translateZ(100px); }
+    .back { transform: rotateY(180deg) translateZ(100px); }
+    .right { transform: rotateY(90deg) translateZ(100px); }
+    .left { transform: rotateY(-90deg) translateZ(100px); }
+    .top { transform: rotateX(90deg) translateZ(100px); }
+    .bottom { transform: rotateX(-90deg) translateZ(100px); }
+    
+    .cube.explode .front { transform: translateZ(200px); }
+    .cube.explode .back { transform: rotateY(180deg) translateZ(200px); }
+    .cube.explode .right { transform: rotateY(90deg) translateZ(200px); }
+    .cube.explode .left { transform: rotateY(-90deg) translateZ(200px); }
+    .cube.explode .top { transform: rotateX(90deg) translateZ(200px); }
+    .cube.explode .bottom { transform: rotateX(-90deg) translateZ(200px); }
+}
+
+/* 流星容器和样式 */
+#meteor-container, 
+.meteor-shower {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.meteor {
+    position: absolute;
+    height: 2px;
+    background: linear-gradient(to right, transparent, white);
+    border-radius: 50%;
+    filter: blur(1px);
+}
+
+/* 音乐播放器 */
+.music-player {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.music-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 128, 223, 0.6);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(255, 128, 223, 0.3);
+    transition: all 0.3s;
+}
+
+.music-btn:hover {
+    background: rgba(255, 128, 223, 0.2);
+    box-shadow: 0 0 20px rgba(255, 128, 223, 0.5);
+}
+
+.music-info {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 128, 223, 0.6);
+    padding: 5px 15px;
+    border-radius: 20px;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    backdrop-filter: blur(5px);
+}
+
+/* 文件输入 */
+.file-input {
+    position: relative;
+}
+
+.file-input input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* 交互状态 */
+.cube:hover {
+    transform: scale(1.1);
+}
+
+.cube:hover .cube-face {
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 50px rgba(100, 200, 255, 0.8);
+}
+
+.cube:hover .cube-video {
+    opacity: 1;
+}
+
+.cube.active {
+    transform: scale(1.2);
+}
+
+.cube.active .cube-face {
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 70px rgba(100, 200, 255, 1);
+}
+
+/* 占位符样式 */
+.face-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+} 
